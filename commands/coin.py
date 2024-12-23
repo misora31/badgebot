@@ -1,5 +1,7 @@
 from header import *
 async def coin(message, args):
+  embed = discord.Embed(color=discord.Color(0xbc614e))
+  embed.set_footer(text="Contact @DePVLoper in #committee-contact for any questions.")
   if len(args) == 0:
     cursor.execute(coins_dump_str)
     results = cursor.fetchall()
@@ -8,6 +10,7 @@ async def coin(message, args):
     for result in results:
       dump += str(result[1]) + ' - ' + id_to_discordname(result[0], client.get_server('372042060913442818')) + '\n'
     msg = dump
+    embed.add_field(name="Coins Leaderboard", value=msg)
   else:
     splt = args.split(maxsplit=1)
     if len(splt) == 2:
@@ -30,6 +33,7 @@ async def coin(message, args):
       result = cursor.fetchone()
       if change == None and result != None and result[0] != None:
         msg = result[0]
+        embed.add_field(name="Coins for "+discorduser_to_discordname(user),value=msg)
       elif coinpermission(message.author):
         if result == None:
           change = 0 if change == None else change
@@ -38,10 +42,12 @@ async def coin(message, args):
         else:
           value = 0 if result[0] == None else result[0]
           cursor.execute(coins_update_str, (change+value, userid))
-          msg = change+value
+          msg = str(value) + " => " + str(change+value)
+        embed.add_field(name="Coins for "+discorduser_to_discordname(user),value=msg)
       elif change==None:
-        msg = 0
+        embed.add_field(name="Coins for "+discorduser_to_discordname(user),value="0")
       else:
         msg = no_permissions_message
-  await client.send_message(message.channel, msg)
-
+        embed.add_field(name="Error!",value=msg)
+  connection.commit()
+  await client.send_message(message.channel, embed=embed)
